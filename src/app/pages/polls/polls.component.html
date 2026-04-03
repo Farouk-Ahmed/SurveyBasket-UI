@@ -1,0 +1,315 @@
+<app-header />
+<div class="dashboard-page">
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Manage Polls</h1>
+        <p class="page-subtitle">Create, publish, and track your service request polls</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn-primary" (click)="toggleCreateForm()">
+          <svg *ngIf="!showCreateForm" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg *ngIf="showCreateForm" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          {{ showCreateForm ? 'Cancel Form' : 'Create Poll' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Create Form -->
+    @if (showCreateForm) {
+      <div class="create-poll-card glass-strong">
+        <h3>Create New Poll</h3>
+        <form (ngSubmit)="onCreatePoll()">
+          @if (createError) {
+            <div class="alert-error-banner">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {{ createError }}
+            </div>
+          }
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>
+                Title
+                <span class="char-count" [class.over]="newPoll.title.length > 20 || newPoll.title.length < 5">
+                  {{ newPoll.title.length }}/20
+                </span>
+              </label>
+              <input
+                type="text"
+                class="input-3d"
+                placeholder="Enter poll title (5–20 characters)..."
+                [(ngModel)]="newPoll.title"
+                name="title"
+                required
+                minlength="5"
+                maxlength="20"
+                #titleInput="ngModel"
+              />
+              @if (titleInput.invalid && (titleInput.dirty || titleInput.touched)) {
+                <span class="field-error">Title must be between 5 and 20 characters.</span>
+              }
+            </div>
+            <div class="form-group full-width">
+              <label>Summary / Note</label>
+              <textarea
+                class="input-3d"
+                placeholder="Provide a summary or description..."
+                [(ngModel)]="newPoll.summray"
+                name="summray"
+                rows="3"
+                required
+                #summaryInput="ngModel"
+              ></textarea>
+              @if (summaryInput.invalid && (summaryInput.dirty || summaryInput.touched)) {
+                <span class="field-error">Summary is required.</span>
+              }
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input
+                type="date"
+                class="input-3d"
+                [(ngModel)]="newPoll.startsAt"
+                name="startsAt"
+                required
+                [min]="todayStr"
+              />
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input
+                id="endDate" 
+                type="date"
+                class="input-3d"
+                [(ngModel)]="newPoll.endsAt"
+                name="endsAt"
+                required
+                [min]="newPoll.startsAt || todayStr"
+                [max]="maxEndStr"
+              />
+            </div>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="upload-section">
+            <label class="upload-label">Poll Images <span class="optional-tag">Optional</span></label>
+            <label class="upload-dropzone" for="poll-images">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Click to select images or drag & drop</span>
+              <small>PNG, JPG, WEBP — Multiple files allowed</small>
+              <input id="poll-images" type="file" accept="image/*" multiple (change)="onFilesSelected($event)" />
+            </label>
+
+            @if (imagePreviews.length > 0) {
+              <div class="preview-grid">
+                @for (preview of imagePreviews; track $index) {
+                  <div class="preview-item">
+                    <img [src]="preview" [alt]="'Image ' + ($index + 1)" />
+                    <button type="button" class="remove-img" (click)="removeSelectedFile($index)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-actions">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="newPoll.isPublished" name="isPublished">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Publish immediately</span>
+            </label>
+            <div class="buttons">
+              <button type="button" class="btn-ghost" (click)="toggleCreateForm()">Cancel</button>
+              <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+                @if (isSubmitting) {
+                  <span>{{ selectedFiles.length > 0 ? 'Uploading...' : 'Saving...' }}</span>
+                } @else {
+                  <span>{{ selectedFiles.length > 0 ? 'Save & Upload Images' : 'Save Poll' }}</span>
+                }
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Polls Grid -->
+    @if (loading) {
+      <div class="loading-state">Loading polls...</div>
+    } @else if (polls.length === 0) {
+      <div class="empty-state glass">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <h3>No polls found</h3>
+        <p>You haven't created any polls yet. Click "Create Poll" to get started.</p>
+      </div>
+    } @else {
+      <div class="polls-grid">
+        @for (poll of polls; track poll.id) {
+          <div class="poll-card glass">
+            <div class="poll-header">
+              <h3 class="poll-title">{{ poll.title }}</h3>
+              <span class="status-badge" [class.published]="poll.isPublished">
+                {{ poll.isPublished ? 'Published' : 'Draft' }}
+              </span>
+            </div>
+
+            <p class="poll-summary">{{ poll.note || 'No description provided.' }}</p>
+
+            <div class="poll-dates">
+              <div class="date-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Starts: {{ poll.startsAt | date:'medium' }}</span>
+              </div>
+              <div class="date-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Ends: {{ poll.endsAt | date:'medium' }}</span>
+              </div>
+            </div>
+
+            <!-- Poll Images Thumbnails -->
+            @if (poll.images && poll.images.length > 0) {
+              <div class="poll-thumbnails">
+                @for (img of poll.images | slice:0:4; track img.id; let i = $index) {
+                  <div class="thumbnail" (click)="openLightbox(poll, i)">
+                    <img [src]="img.fileUrl" [alt]="img.fileName" />
+                    @if (i === 3 && poll.images.length > 4) {
+                      <div class="thumbnail-overlay">
+                        +{{ poll.images.length - 4 }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="poll-actions">
+              <button class="btn-ghost btn-sm" (click)="togglePublish(poll)">
+                {{ poll.isPublished ? 'Unpublish' : 'Publish' }}
+              </button>
+              <button class="btn-icon btn-danger" (click)="requestDeletePoll(poll.id)" title="Delete Poll">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Custom Delete Modal -->
+@if (showDeleteModal) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-card glass-strong" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="icon-danger">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3>Delete Poll</h3>
+      </div>
+      
+      <p class="modal-desc">Are you sure you want to delete this poll? This action cannot be undone.</p>
+      
+      <div class="form-group">
+        <label>Reason for deletion <span class="required">*</span></label>
+        <textarea 
+          class="input-3d" 
+          placeholder="Please provide a valid reason for deleting this poll..."
+          [(ngModel)]="deleteReason" 
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="cancelDelete()" [disabled]="isDeleting">Cancel</button>
+        <button 
+          class="btn-danger-solid" 
+          (click)="confirmDelete()" 
+          [disabled]="isDeleting || !deleteReason.trim()"
+        >
+          {{ isDeleting ? 'Deleting...' : 'Confirm Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Fullscreen Lightbox Gallery -->
+@if (showLightbox && currentLightboxPoll) {
+  <div class="lightbox-overlay" (click)="closeLightbox()">
+    <!-- Top toolbar: Close button -->
+    <button class="lightbox-close" (click)="closeLightbox()" title="Close">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    
+    <div class="lightbox-content" (click)="$event.stopPropagation()">
+      
+      @if (currentLightboxPoll.images && currentLightboxPoll.images.length > 0) {
+        
+        <!-- Navigation Prev -->
+        @if (currentLightboxPoll.images.length > 1) {
+          <button class="lightbox-nav prev" (click)="prevImage($event)" [class.hidden]="lightboxIndex === 0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        }
+
+        <!-- Image Container -->
+        <div class="lightbox-image-container">
+          <img [src]="currentLightboxPoll.images[lightboxIndex].fileUrl" [alt]="currentLightboxPoll.images[lightboxIndex].fileName" class="lightbox-img" />
+          
+          <div class="lightbox-footer">
+            <div class="lightbox-counter">{{ lightboxIndex + 1 }} / {{ currentLightboxPoll.images.length }}</div>
+            
+            <!-- Management Toolbar: Delete & Upload -->
+            <div class="lightbox-management">
+              <button 
+                class="btn-icon btn-danger btn-sm" 
+                title="Delete this image" 
+                (click)="deleteLightboxImage()"
+                [disabled]="isLightboxLoading"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </button>
+              
+              <label class="btn-ghost btn-sm btn-upload-inline" [class.disabled]="isLightboxLoading" title="Add new image">
+                <input type="file" multiple accept="image/*" class="hidden-input" (change)="uploadLightboxImage($event)" [disabled]="isLightboxLoading" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Image
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Next -->
+        @if (currentLightboxPoll.images.length > 1) {
+          <button class="lightbox-nav next" (click)="nextImage($event)" [class.hidden]="lightboxIndex === currentLightboxPoll.images.length - 1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        }
+
+      } @else {
+        <!-- Empty State (if all images deleted) -->
+        <div class="lightbox-empty-state glass">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mb-3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <h3>No images left</h3>
+          <p>You have deleted all images for this poll.</p>
+          
+          <label class="btn-primary mt-4" [class.disabled]="isLightboxLoading">
+            <input type="file" multiple accept="image/*" class="hidden-input" (change)="uploadLightboxImage($event)" [disabled]="isLightboxLoading" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload Images
+          </label>
+        </div>
+      }
+    </div>
+  </div>
+}

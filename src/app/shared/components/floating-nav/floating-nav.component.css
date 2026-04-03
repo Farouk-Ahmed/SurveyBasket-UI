@@ -1,0 +1,40 @@
+.floating-btn {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.floating-btn:hover {
+  background: rgba(74, 222, 128, 0.25);
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.3);
+}
+
+.floating-btn svg {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-btn svg.flip {
+  transform: rotate(180deg);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.15); }
+  50% { box-shadow: 0 0 30px rgba(74, 222, 128, 0.3), 0 0 60px rgba(74, 222, 128, 0.1); }
+}

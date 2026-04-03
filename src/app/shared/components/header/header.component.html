@@ -1,0 +1,108 @@
+<header class="header" [class.scrolled]="isScrolled">
+  <div class="header-inner">
+    <!-- 3D Animated Logo -->
+    <a routerLink="/" class="logo">
+      <div class="logo-3d-wrap">
+        <!-- Orbiting service icons -->
+        <div class="orbit-ring">
+          <!-- Hammer -->
+          <div class="orbit-icon orbit-icon-1">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 12l-8.5 8.5a2.12 2.12 0 0 1-3-3L12 9"/>
+              <path d="M17.64 15L22 10.64"/>
+              <path d="M20.91 11.7l-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/>
+            </svg>
+          </div>
+          <!-- Wrench -->
+          <div class="orbit-icon orbit-icon-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <!-- Laptop -->
+          <div class="orbit-icon orbit-icon-3">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="2" y1="20" x2="22" y2="20"/>
+            </svg>
+          </div>
+          <!-- Mobile -->
+          <div class="orbit-icon orbit-icon-4">
+            <svg width="11" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <circle cx="12" cy="17" r="1" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Center pulsing core -->
+        <div class="logo-core">
+          <div class="logo-core-inner"></div>
+        </div>
+      </div>
+
+      <!-- Platform name -->
+      <div class="logo-name">
+        <span class="logo-fao">FAO</span><span class="logo-jobs">Jobs</span>
+        <span class="logo-tagline">Services</span>
+      </div>
+    </a>
+
+    <!-- Nav Links -->
+    <nav class="nav-links">
+      <a routerLink="/" fragment="services" class="nav-link">Services</a>
+      <a routerLink="/" fragment="about" class="nav-link">About</a>
+      <a routerLink="/" fragment="contact" class="nav-link">Contact</a>
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/polls" class="nav-link">Polls</a>
+      }
+      @if (authService.isAdmin()) {
+        <a routerLink="/dashboard" class="nav-link">Dashboard</a>
+      }
+    </nav>
+
+    <!-- Auth Buttons -->
+    <div class="auth-buttons">
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/profile" class="user-pill">
+          @if (getUserProfilePicture()) {
+            <img [src]="getUserProfilePicture()" alt="Profile" class="user-avatar user-avatar-img" />
+          } @else {
+            <div class="user-avatar">{{ getUserInitial() }}</div>
+          }
+          <span class="user-name">{{ getUserFullName() }}</span>
+        </a>
+        <button class="btn-ghost btn-sm" (click)="authService.logout()">Logout</button>
+      } @else {
+        <a routerLink="/login" class="btn-ghost btn-sm">Login</a>
+        <a routerLink="/register" class="btn-primary btn-sm">Get Started</a>
+      }
+    </div>
+
+    <!-- Mobile Toggle -->
+    <button class="mobile-toggle" (click)="toggleMobile()" [class.active]="mobileOpen">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- Mobile Menu -->
+  @if (mobileOpen) {
+    <div class="mobile-menu">
+      <a routerLink="/" (click)="mobileOpen=false">Home</a>
+      <a routerLink="/" fragment="services" (click)="mobileOpen=false">Services</a>
+      <a routerLink="/" fragment="about" (click)="mobileOpen=false">About</a>
+      <a routerLink="/" fragment="contact" (click)="mobileOpen=false">Contact</a>
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/polls" (click)="mobileOpen=false">Polls</a>
+        <a routerLink="/profile" (click)="mobileOpen=false">My Profile</a>
+      }
+      @if (authService.isAdmin()) {
+        <a routerLink="/dashboard" (click)="mobileOpen=false">Dashboard</a>
+      }
+      @if (!authService.isLoggedIn()) {
+        <a routerLink="/login" (click)="mobileOpen=false">Login</a>
+        <a routerLink="/register" (click)="mobileOpen=false">Register</a>
+      }
+    </div>
+  }
+</header>
