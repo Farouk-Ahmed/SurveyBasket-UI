@@ -1,7 +1,8 @@
 /**
- * Captures full-page screenshots of main routes and one session video (WebM).
- * Requires: npm run serve (or ng serve) on http://localhost:4200
- * Run: node scripts/capture-ui.cjs
+ * Captures full-page screenshots of main routes and one session video (WebM)
+ * under public/assets/images/web/recordings/.
+ * Requires: ng serve on http://localhost:4200
+ * Run: npm run capture:ui
  */
 const path = require('path');
 const fs = require('fs');
@@ -34,7 +35,7 @@ const routes = [
       await page.goto(`${base}${r.path}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
       await page.waitForTimeout(2500);
       await page.screenshot({
-        path: path.join(outDir, `${r.file}.png`),
+        path: path.join(videoDir, `${r.file}.png`),
         fullPage: true,
       });
       console.log('OK screenshot:', r.file);
@@ -57,5 +58,5 @@ const routes = [
     fs.renameSync(path.join(videoDir, webms[0].f), target);
     console.log('OK video:', target);
   }
-  console.log('Done. PNGs in', outDir);
+  console.log('Done. PNGs and tour video in', videoDir);
 })();
